@@ -49,6 +49,7 @@ html, body {
   box-shadow: 3px 3px 0 rgba(0,0,0,0.1);
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   width: 100%;
 }
 #years li {
@@ -81,8 +82,20 @@ html, body {
 
 @media (max-width: 900px) {
   #overlay {
-    margin-left: -200px;
-    width: 400px;
+    margin-left: -300px;
+    width: 600px;
+  }
+  #years li {
+    flex: none;
+  }
+}
+
+@media (max-width: 600px) {
+  #overlay {
+    left: 10px;
+    right: 10px;
+    margin: 0;
+    width: auto;
   }
   #years li {
     flex: none;
