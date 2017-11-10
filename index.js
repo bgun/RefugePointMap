@@ -134,15 +134,15 @@ map.on('load', () => {
       .addTo(map);
   }
 
-  let onClickYear = function(e) {
+  let onClickYear = function(year, el, e) {
     Array.prototype.forEach.call(document.getElementsByClassName('year'), (yearEl => yearEl.className = 'year'));
     el.className = 'year active';
     map.getSource('rpCountries').setData({
       type: rpCountryGeoJson.type,
       crs: rpCountryGeoJson.crs,
-      features: (y === ALL_YEARS_LABEL) ?
+      features: (year === ALL_YEARS_LABEL) ?
         rpCountryGeoJson.features :
-        rpCountryGeoJson.features.filter(c => c.properties.AnnualData[y] === 1)
+        rpCountryGeoJson.features.filter(c => c.properties.AnnualData[year] === 1)
     });
   }
 
@@ -170,7 +170,7 @@ map.on('load', () => {
       el.className = 'year';
     }
 
-    el.addEventListener('click', onClickYear);
+    el.addEventListener('click', onClickYear.bind(this, y, el));
     $years.appendChild(el);
   });
 });
