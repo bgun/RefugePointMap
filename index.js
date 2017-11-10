@@ -1,5 +1,11 @@
+/**
+ *  index.js
+ */
+
+'use strict';
+
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuLWNpdHltYXBzIiwiYSI6Imt2SVhSa3MifQ.7Llc31vHrYdpHRj9RTOfFQ';
-var map = new mapboxgl.Map({
+let map = new mapboxgl.Map({
     container: 'map-container',
     style: 'mapbox://styles/ben-citymaps/cj9tdnhko2vhq2rnybxftd6ob',
     center: [0, 12],
@@ -16,20 +22,31 @@ var map = new mapboxgl.Map({
 
 // build RefugePoint data
 
-var property_key = "ADMIN";
-var rpCountryAbbrevs = graphdata.map(c => c.CountryAbbrev);
-var rpCountryGeoJson = {
-  "type": "FeatureCollection",
-  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } }
+const ALL_YEARS_LABEL = "All";
+
+const colors = {
+  "COUNTRY_INACTIVE": "#358",
+  "COUNTRY_ACTIVE"  : "#f3f3f3",
+  "COUNTRY_BORDER"  : "#00b5cc",
+  "COUNTRY_HOVER"   : "#00b5cc",
+  "COUNTRY_BORDER_HOVER": "#f8971d"
+}
+
+const PROPERTY_KEY = "ADMIN";
+let rpCountryGeoJson = {
+  type: "FeatureCollection",
+  crs: { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } }
 };
-rpCountryGeoJson.features = countriesGeoJson.features.filter(c => {
-  if (rpCountryAbbrevs.indexOf(c.properties.SOV_A3) > -1) {
-    return true;
+rpCountryGeoJson.features = graphdata.map(rp => {
+  let feature = countriesGeoJson.features.filter(c => c.properties.SOV_A3 === rp.CountryAbbrev)[0];
+  if (feature) {
+    feature.properties = Object.assign({}, feature.properties, rp);
+    return feature;
   } else {
-    return false;
+    throw new Error("Could not find %s in country data", rp.CountryAbbrev);
+    return null;
   }
 });
-
 
 // set up map events
 
@@ -43,12 +60,12 @@ map.on('load', function () {
     "data": rpCountryGeoJson
   });
   map.addLayer({
-    "id": "country-fills",
+    "id": "country-fills-inactive",
     "type": "fill",
     "source": "countries",
     "layout": {},
     "paint": {
-      "fill-color": "#AAAAAA",
+      "fill-color": colors.COUNTRY_INACTIVE,
       "fill-opacity": 1
     }
   });
@@ -58,7 +75,7 @@ map.on('load', function () {
     "source": "rpCountries",
     "layout": {},
     "paint": {
-      "fill-color": "#F3F3F3",
+      "fill-color": colors.COUNTRY_ACTIVE,
       "fill-opacity": 1
     }
   });
@@ -68,56 +85,79 @@ map.on('load', function () {
     "source": "countries",
     "layout": {},
     "paint": {
-        "line-color": "#3388FF",
+        "line-color": colors.COUNTRY_BORDER,
         "line-width": 1
     }
   });
   map.addLayer({
     "id": "rp-country-fills-hover",
     "type": "fill",
-    "source": "countries",
+    "source": "rpCountries",
     "layout": {},
     "paint": {
-        "fill-color": "#44AAFF",
+        "fill-color": colors.COUNTRY_HOVER,
         "fill-opacity": 1
     },
-    "filter": ["==", property_key, ""]
+    "filter": ["==", PROPERTY_KEY, ""]
+  });
+  map.addLayer({
+    "id": "rp-country-borders-hover",
+    "type": "line",
+    "source": "rpCountries",
+    "layout": {},
+    "paint": {
+        "line-color": colors.COUNTRY_BORDER_HOVER,
+        "line-width": 3
+    },
+    "filter": ["==", PROPERTY_KEY, ""]
   });
 
-  map.on("mousemove", "rp-country-fills", function(e) {
-    map.setFilter("rp-country-fills-hover", ["==", property_key, e.features[0].properties[property_key]]);
-    var markup = "<p>"+e.features[0].properties.ADMIN+"</p>";
-    showInfoBox(e.point, markup);
+  let popup = new mapboxgl.Popup({
+    closeButton: false,
+    offset: [0,-20]
   });
+
+  function setActive(e) {
+    map.setFilter("rp-country-fills-hover", ["==", PROPERTY_KEY, e.features[0].properties[PROPERTY_KEY]]);
+    map.setFilter("rp-country-borders-hover", ["==", PROPERTY_KEY, e.features[0].properties[PROPERTY_KEY]]);
+    popup.setLngLat(e.lngLat)
+      .setHTML('<div id="infobox">'+e.features[0].properties.ADMIN+'</div>')
+      .addTo(map);
+  }
+
+  map.on("mousemove", "rp-country-fills", setActive);
 
   map.on("mouseleave", "rp-country-fills-hover", function() {
-    map.setFilter("rp-country-fills-hover", ["==", property_key, ""]);
-    hideInfoBox();
+    map.setFilter("rp-country-fills-hover", ["==", PROPERTY_KEY, ""]);
+    map.setFilter("rp-country-borders-hover", ["==", PROPERTY_KEY, ""]);
+    popup.remove();
   });
 
-  map.on("click", "rp-country-fills", function(e) {
-    map.setFilter("rp-country-fills-hover", ["==", property_key, e.features[0].properties[property_key]]);
-    var markup = "<p>"+e.features[0].properties.ADMIN+"</p>";
-    showInfoBox(e.point, markup);
+  map.on("click", "rp-country-fills", setActive);
+
+  let years = ["2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017",ALL_YEARS_LABEL];
+  let $years = document.getElementById('years');
+  years.forEach(y => {
+    let el = document.createElement('li');
+    el.innerHTML = y;
+    if (y === ALL_YEARS_LABEL) {
+      el.className = 'year active';
+    } else {
+      el.className = 'year';
+    }
+    el.addEventListener('click', (e) => {
+      Array.prototype.forEach.call(document.getElementsByClassName('year'), (yearEl => yearEl.className = 'year'));
+      el.className = 'year active';
+      map.getSource('rpCountries').setData({
+        type: rpCountryGeoJson.type,
+        crs: rpCountryGeoJson.crs,
+        features: (y === ALL_YEARS_LABEL) ?
+          rpCountryGeoJson.features :
+          rpCountryGeoJson.features.filter(c => c.properties.AnnualData[y] === 1)
+      });
+    });
+    $years.appendChild(el);
   });
 });
 
 
-var years = ["2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017"];
-var $years = document.getElementById('years');
-years.forEach(y => {
-  var el = document.createElement('li');
-  el.innerHTML = y;
-  $years.appendChild(el);
-});
-
-var $infobox = document.getElementById('infobox');
-var showInfoBox = function(point, markup) {
-  $infobox.style.display = "table";
-  $infobox.style.top = (point.y+5)+"px";
-  $infobox.style.left = (point.x+5)+"px";
-  $infobox.innerHTML = markup;
-};
-var hideInfoBox = function() {
-  $infobox.style.display = "none";
-};

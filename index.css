@@ -1,0 +1,90 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html, body {
+  font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+}
+#map-container {
+  position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+.mapboxgl-popup {
+}
+.mapboxgl-popup-content {
+  background: white;
+  border: 1px solid rgba(0,0,0,0.2);
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+  display: table;
+  padding: 10px;
+  width: 160px;
+}
+.mapboxgl-popup-tip {
+  display: none;
+}
+#infobox {
+  display: table-cell;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+  vertical-align: middle;
+  width: 100%;
+}
+
+#overlay {
+  margin-left: -400px;
+  position: absolute;
+    bottom: 50px;
+    left: 50%;
+  width: 800px;
+}
+
+#years {
+  background: #FFF;
+  border-top: 3px solid #00b5cc;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+#years li {
+  border: 3px solid white;
+  flex: 1;
+  font-size: 13px;
+  font-weight: bold;
+  height: 50px;
+  line-height: 44px;
+  list-style: none;
+  text-align: center;
+  width: 100px;
+}
+#years li:hover {
+  border: 3px solid #f8971d;
+}
+#years li.active {
+  background: #00b5cc;
+  border: 3px solid #00b5cc;
+  color: white;
+}
+#logo {
+  height: 57px;
+  margin-left: -150px;
+  position: relative;
+    bottom: 0;
+    left: 50%;
+  max-width: 300px;
+}
+
+@media (max-width: 900px) {
+  #overlay {
+    margin-left: -200px;
+    width: 400px;
+  }
+  #years li {
+    flex: none;
+  }
+}
