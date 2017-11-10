@@ -18,7 +18,6 @@ let map = new mapboxgl.Map({
 
   dragRotate: false,
   pitchWithRotate: false,
-  touchZoomRotate: false,
 });
 map.touchZoomRotate.disableRotation();
 
