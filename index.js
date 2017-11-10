@@ -6,18 +6,21 @@
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuLWNpdHltYXBzIiwiYSI6Imt2SVhSa3MifQ.7Llc31vHrYdpHRj9RTOfFQ';
 let map = new mapboxgl.Map({
-    container: 'map-container',
-    style: 'mapbox://styles/ben-citymaps/cj9tdnhko2vhq2rnybxftd6ob',
-    center: [0, 12],
+  container: 'map-container',
+  style: 'mapbox://styles/ben-citymaps/cj9tdnhko2vhq2rnybxftd6ob',
+  center: [0, 12],
 
-    zoom: 2,
-    minZoom: 1,
-    maxZoom: 4,
+  attributionControl: false,
 
-    dragRotate: false,
-    pitchWithRotate: false,
-    touchZoomRotate: false,
+  zoom: 2,
+  minZoom: 1,
+  maxZoom: 4,
+
+  dragRotate: false,
+  pitchWithRotate: false,
+  touchZoomRotate: false,
 });
+map.touchZoomRotate.disableRotation();
 
 
 // build RefugePoint data
