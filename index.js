@@ -4,35 +4,12 @@
 
 'use strict';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuLWNpdHltYXBzIiwiYSI6Imt2SVhSa3MifQ.7Llc31vHrYdpHRj9RTOfFQ';
-let map = new mapboxgl.Map({
-  container: 'map-container',
-  style: 'mapbox://styles/ben-citymaps/cj9tdnhko2vhq2rnybxftd6ob',
-  center: [0, 12],
-
-  attributionControl: false,
-
-  zoom: 2,
-  minZoom: 1,
-  maxZoom: 4,
-
-  dragRotate: false,
-  pitchWithRotate: false,
-});
-map.touchZoomRotate.disableRotation();
-
+const ALL_YEARS_LABEL = "All";
+const YEAR_KEYS = ["2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017",ALL_YEARS_LABEL];
+const $years = document.getElementById('years');
 
 // build RefugePoint data
 
-const ALL_YEARS_LABEL = "All";
-
-const colors = {
-  "COUNTRY_INACTIVE": "#358",
-  "COUNTRY_ACTIVE"  : "#f3f3f3",
-  "COUNTRY_BORDER"  : "#00b5cc",
-  "COUNTRY_HOVER"   : "#00b5cc",
-  "COUNTRY_BORDER_HOVER": "#f8971d"
-}
 
 const PROPERTY_KEY = "ADMIN";
 let rpCountryGeoJson = {
@@ -50,9 +27,44 @@ rpCountryGeoJson.features = graphdata.map(rp => {
   }
 });
 
-// set up map events
 
-map.on('load', function () {
+// Set up Mapbox map.
+// Access token is under Ben's Citymaps account
+
+mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuLWNpdHltYXBzIiwiYSI6Imt2SVhSa3MifQ.7Llc31vHrYdpHRj9RTOfFQ';
+const colors = {
+  "COUNTRY_INACTIVE": "#358",
+  "COUNTRY_ACTIVE"  : "#f3f3f3",
+  "COUNTRY_BORDER"  : "#00b5cc",
+  "COUNTRY_HOVER"   : "#00b5cc",
+  "COUNTRY_BORDER_HOVER": "#f8971d"
+}
+
+let map = new mapboxgl.Map({
+  container: 'map-container',
+  style: 'mapbox://styles/ben-citymaps/cj9tdnhko2vhq2rnybxftd6ob',
+  center: [0, 12],
+
+  maxBounds: [[-180, -65], [180, 72]],
+
+  zoom: 2,
+  minZoom: 1,
+  maxZoom: 4,
+ 
+  // No keyboard rotation or 3D pitch
+  dragRotate: false,
+  pitchWithRotate: false,
+
+  attributionControl: false,
+});
+
+// Leave pinch-to-zoom enabled, but disable rotation
+map.touchZoomRotate.disableRotation();
+
+map.on('load', () => {
+
+  // Set up data sources and styles
+
   map.addSource("countries", {
     "type": "geojson",
     "data": countriesGeoJson
@@ -65,7 +77,6 @@ map.on('load', function () {
     "id": "country-fills-inactive",
     "type": "fill",
     "source": "countries",
-    "layout": {},
     "paint": {
       "fill-color": colors.COUNTRY_INACTIVE,
       "fill-opacity": 1
@@ -75,7 +86,6 @@ map.on('load', function () {
     "id": "rp-country-fills",
     "type": "fill",
     "source": "rpCountries",
-    "layout": {},
     "paint": {
       "fill-color": colors.COUNTRY_ACTIVE,
       "fill-opacity": 1
@@ -85,7 +95,6 @@ map.on('load', function () {
     "id": "country-borders",
     "type": "line",
     "source": "countries",
-    "layout": {},
     "paint": {
         "line-color": colors.COUNTRY_BORDER,
         "line-width": 1
@@ -95,7 +104,6 @@ map.on('load', function () {
     "id": "rp-country-fills-hover",
     "type": "fill",
     "source": "rpCountries",
-    "layout": {},
     "paint": {
         "fill-color": colors.COUNTRY_HOVER,
         "fill-opacity": 1
@@ -106,7 +114,6 @@ map.on('load', function () {
     "id": "rp-country-borders-hover",
     "type": "line",
     "source": "rpCountries",
-    "layout": {},
     "paint": {
         "line-color": colors.COUNTRY_BORDER_HOVER,
         "line-width": 3
@@ -119,7 +126,7 @@ map.on('load', function () {
     offset: [0,-20]
   });
 
-  function setActive(e) {
+  let changeActiveCountry = function(e) {
     map.setFilter("rp-country-fills-hover", ["==", PROPERTY_KEY, e.features[0].properties[PROPERTY_KEY]]);
     map.setFilter("rp-country-borders-hover", ["==", PROPERTY_KEY, e.features[0].properties[PROPERTY_KEY]]);
     popup.setLngLat(e.lngLat)
@@ -127,37 +134,43 @@ map.on('load', function () {
       .addTo(map);
   }
 
-  map.on("mousemove", "rp-country-fills", setActive);
+  let onClickYear = function(e) {
+    Array.prototype.forEach.call(document.getElementsByClassName('year'), (yearEl => yearEl.className = 'year'));
+    el.className = 'year active';
+    map.getSource('rpCountries').setData({
+      type: rpCountryGeoJson.type,
+      crs: rpCountryGeoJson.crs,
+      features: (y === ALL_YEARS_LABEL) ?
+        rpCountryGeoJson.features :
+        rpCountryGeoJson.features.filter(c => c.properties.AnnualData[y] === 1)
+    });
+  }
 
-  map.on("mouseleave", "rp-country-fills-hover", function() {
+  map.on("mousemove", "rp-country-fills", changeActiveCountry);
+  // Adding click event for mobile taps
+  map.on("click",     "rp-country-fills", changeActiveCountry);
+
+  map.on("mouseleave", "rp-country-fills-hover", () => {
     map.setFilter("rp-country-fills-hover", ["==", PROPERTY_KEY, ""]);
     map.setFilter("rp-country-borders-hover", ["==", PROPERTY_KEY, ""]);
     popup.remove();
   });
 
-  map.on("click", "rp-country-fills", setActive);
 
-  let years = ["2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017",ALL_YEARS_LABEL];
-  let $years = document.getElementById('years');
-  years.forEach(y => {
+  // Build clickable labels to show data by year
+
+  YEAR_KEYS.forEach(y => {
     let el = document.createElement('li');
     el.innerHTML = y;
+
+    // Ignore annual data if "ALL" is active, just show all countries we have any data for
     if (y === ALL_YEARS_LABEL) {
       el.className = 'year active';
     } else {
       el.className = 'year';
     }
-    el.addEventListener('click', (e) => {
-      Array.prototype.forEach.call(document.getElementsByClassName('year'), (yearEl => yearEl.className = 'year'));
-      el.className = 'year active';
-      map.getSource('rpCountries').setData({
-        type: rpCountryGeoJson.type,
-        crs: rpCountryGeoJson.crs,
-        features: (y === ALL_YEARS_LABEL) ?
-          rpCountryGeoJson.features :
-          rpCountryGeoJson.features.filter(c => c.properties.AnnualData[y] === 1)
-      });
-    });
+
+    el.addEventListener('click', onClickYear);
     $years.appendChild(el);
   });
 });
