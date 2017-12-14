@@ -1,6 +1,6 @@
 var graphdata = [
  {
-   "CountryName": "Angola ",
+   "CountryName": "Angola",
    "CountryAbbrev": "AGO",
    "AnnualData": {
     "2016": 1,
@@ -8,7 +8,17 @@ var graphdata = [
    }
  },
  {
-   "CountryName": "Burkina Faso ",
+   "CountryName": "Australia",
+   "CountryAbbrev": "AUS",
+   "ResettledTo": true
+ },
+ {
+   "CountryName": "Belgium",
+   "CountryAbbrev": "BEL",
+   "ResettledTo": true
+ },
+ {
+   "CountryName": "Burkina Faso",
    "CountryAbbrev": "BFA",
    "AnnualData": {
     "2016": 1,
@@ -35,6 +45,11 @@ var graphdata = [
    }
  },
  {
+   "CountryName": "Canada",
+   "CountryAbbrev": "CAN",
+   "ResettledTo": true
+ },
+ {
    "CountryName": "Chad ",
    "CountryAbbrev": "TCD",
    "AnnualData": {
@@ -51,6 +66,11 @@ var graphdata = [
     "2014": 1,
     "2015": 1
    }
+ },
+ {
+   "CountryName": "Denmark",
+   "CountryAbbrev": "DNK",
+   "ResettledTo": true
  },
  {
    "CountryName": "Djibouti",
@@ -98,11 +118,26 @@ var graphdata = [
    }
  },
  {
+   "CountryName": "Finland",
+   "CountryAbbrev": "FIN",
+   "ResettledTo": true
+ },
+ {
+   "CountryName": "France",
+   "CountryAbbrev": "FRA",
+   "ResettledTo": true
+ },
+ {
    "CountryName": "Guinea",
    "CountryAbbrev": "GIN",
    "AnnualData": {
     "2016": 1
    }
+ },
+ {
+   "CountryName": "Ireland",
+   "CountryAbbrev": "IRL",
+   "ResettledTo": true
  },
  {
    "CountryName": "Kenya",
@@ -169,12 +204,27 @@ var graphdata = [
    }
  },
  {
+   "CountryName": "Netherlands",
+   "CountryAbbrev": "NLD",
+   "ResettledTo": true
+ },
+ {
    "CountryName": "Niger",
    "CountryAbbrev": "NER",
    "AnnualData": {
     "2016": 1,
     "2017": 1
    }
+ },
+ {
+   "CountryName": "Norway",
+   "CountryAbbrev": "NOR",
+   "ResettledTo": true
+ },
+ {
+   "CountryName": "Portugal",
+   "CountryAbbrev": "PRT",
+   "ResettledTo": true
  },
  {
    "CountryName": "Rwanda",

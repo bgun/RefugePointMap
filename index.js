@@ -12,20 +12,36 @@ const $years = document.getElementById('years');
 
 
 const PROPERTY_KEY = "ADMIN";
+const ABBREV_KEY = "ADM0_A3";
+
 let rpCountryGeoJson = {
   type: "FeatureCollection",
-  crs: { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } }
+  crs: { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  features: []
 };
-rpCountryGeoJson.features = graphdata.map(rp => {
-  let feature = countriesGeoJson.features.filter(c => c.properties.SOV_A3 === rp.CountryAbbrev)[0];
+let resettledCountryGeoJson = {
+  type: "FeatureCollection",
+  crs: { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  features: []
+};
+
+graphdata.forEach(rp => {
+  let feature = countriesGeoJson.features.filter(c => c.properties[ABBREV_KEY] === rp.CountryAbbrev)[0];
   if (feature) {
-    feature.properties = Object.assign({}, feature.properties, rp);
-    return feature;
+    if (rp.ResettledTo === true) {
+      feature.properties = Object.assign({}, feature.properties, rp)
+      resettledCountryGeoJson.features.push(feature);
+    } else {
+      feature.properties = Object.assign({}, feature.properties, rp)
+      rpCountryGeoJson.features.push(feature);
+    }
   } else {
-    throw new Error("Could not find %s in country data", rp.CountryAbbrev);
+    console.log(rp);
+    throw new Error("Could not find %s in country data: ", rp.CountryAbbrev);
     return null;
   }
 });
+
 
 
 // Set up Mapbox map.
@@ -37,7 +53,9 @@ const colors = {
   "COUNTRY_ACTIVE"  : "#f3f3f3",
   "COUNTRY_BORDER"  : "#00b5cc",
   "COUNTRY_HOVER"   : "#00b5cc",
-  "COUNTRY_BORDER_HOVER": "#f8971d"
+  "COUNTRY_BORDER_HOVER": "#f8971d",
+  "RESETTLED_ACTIVE": "#f8981d",
+  "RESETTLED_BORDER": "#00b5cc"
 }
 
 let map = new mapboxgl.Map({
@@ -73,6 +91,12 @@ map.on('load', () => {
     "type": "geojson",
     "data": rpCountryGeoJson
   });
+  map.addSource("resettledCountries", {
+    "type": "geojson",
+    "data": resettledCountryGeoJson
+  });
+
+
   map.addLayer({
     "id": "country-fills-inactive",
     "type": "fill",
@@ -121,16 +145,64 @@ map.on('load', () => {
     "filter": ["==", PROPERTY_KEY, ""]
   });
 
+
+  map.addLayer({
+    "id": "resettle-country-fills",
+    "type": "fill",
+    "source": "resettledCountries",
+    "paint": {
+      "fill-color": colors.RESETTLED_ACTIVE,
+      "fill-opacity": 1
+    }
+  });
+  map.addLayer({
+    "id": "resettle-country-borders",
+    "type": "line",
+    "source": "resettledCountries",
+    "paint": {
+        "line-color": colors.RESETTLED_BORDER,
+        "line-width": 1
+    }
+  });
+  map.addLayer({
+    "id": "resettle-country-fills-hover",
+    "type": "fill",
+    "source": "resettledCountries",
+    "paint": {
+        "fill-color": colors.COUNTRY_HOVER,
+        "fill-opacity": 1
+    },
+    "filter": ["==", PROPERTY_KEY, ""]
+  });
+  map.addLayer({
+    "id": "resettle-country-borders-hover",
+    "type": "line",
+    "source": "resettledCountries",
+    "paint": {
+        "line-color": colors.COUNTRY_BORDER_HOVER,
+        "line-width": 3
+    },
+    "filter": ["==", PROPERTY_KEY, ""]
+  });
+
   let popup = new mapboxgl.Popup({
     closeButton: false,
     offset: [0,-20]
   });
 
   let changeActiveCountry = function(e) {
-    map.setFilter("rp-country-fills-hover", ["==", PROPERTY_KEY, e.features[0].properties[PROPERTY_KEY]]);
-    map.setFilter("rp-country-borders-hover", ["==", PROPERTY_KEY, e.features[0].properties[PROPERTY_KEY]]);
+    map.setFilter("rp-country-fills-hover",         ["==", PROPERTY_KEY, e.features[0].properties[PROPERTY_KEY]]);
+    map.setFilter("rp-country-borders-hover",       ["==", PROPERTY_KEY, e.features[0].properties[PROPERTY_KEY]]);
+    map.setFilter("resettle-country-fills-hover",   ["==", PROPERTY_KEY, e.features[0].properties[PROPERTY_KEY]]);
+    map.setFilter("resettle-country-borders-hover", ["==", PROPERTY_KEY, e.features[0].properties[PROPERTY_KEY]]);
+    
+    let html = '<div id="infobox"><h2>'+e.features[0].properties.ADMIN+'</h2></div>';
+    if (e.features[0].properties.ResettledTo === true) {
+      html = '<div id="infobox" class="resettled"><h3>Resettlement Destination</h3><h2>'+e.features[0].properties.ADMIN+'</h2></div>';
+    }
+
     popup.setLngLat(e.lngLat)
-      .setHTML('<div id="infobox">'+e.features[0].properties.ADMIN+'</div>')
+      .setHTML(html)
       .addTo(map);
   }
 
@@ -146,13 +218,21 @@ map.on('load', () => {
     });
   }
 
-  map.on("mousemove", "rp-country-fills", changeActiveCountry);
+  map.on("mousemove", "rp-country-fills",       changeActiveCountry);
+  map.on("mousemove", "resettle-country-fills", changeActiveCountry);
   // Adding click event for mobile taps
-  map.on("click",     "rp-country-fills", changeActiveCountry);
+  map.on("click",     "rp-country-fills",       changeActiveCountry);
+  map.on("click",     "resettle-country-fills", changeActiveCountry);
 
   map.on("mouseleave", "rp-country-fills-hover", () => {
-    map.setFilter("rp-country-fills-hover", ["==", PROPERTY_KEY, ""]);
-    map.setFilter("rp-country-borders-hover", ["==", PROPERTY_KEY, ""]);
+    map.setFilter("rp-country-fills-hover",         ["==", PROPERTY_KEY, ""]);
+    map.setFilter("rp-country-borders-hover",       ["==", PROPERTY_KEY, ""]);
+    popup.remove();
+  });
+
+  map.on("mouseleave", "resettle-country-fills-hover", () => {
+    map.setFilter("resettle-country-fills-hover",   ["==", PROPERTY_KEY, ""]);
+    map.setFilter("resettle-country-borders-hover", ["==", PROPERTY_KEY, ""]);
     popup.remove();
   });
 

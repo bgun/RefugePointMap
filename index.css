@@ -28,11 +28,26 @@ html, body {
 }
 #infobox {
   display: table-cell;
-  font-size: 15px;
-  font-weight: bold;
   text-align: center;
   vertical-align: middle;
   width: 100%;
+}
+#infobox.resettled {
+  display: block;
+}
+#infobox h2 {
+  font-size: 16px;
+  font-weight: bold;
+}
+#infobox h3 {
+  background-color: #f8971d;
+  border-radius: 5px;
+  color: white;
+  font-weight: bold;
+  line-height: 14px;
+  margin-bottom: 7px;
+  padding: 5px 0;
+  font-size: 12px;
 }
 
 #overlay {
@@ -57,8 +72,8 @@ html, body {
   flex: 1;
   font-size: 13px;
   font-weight: bold;
-  height: 50px;
-  line-height: 44px;
+  height: 40px;
+  line-height: 34px;
   list-style: none;
   text-align: center;
   width: 100px;
